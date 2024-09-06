@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alış-veriş saytı</title>
+    <link rel="stylesheet" href="reset.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"
+        integrity="sha512-Kc323vGBEqzTmouAECnVceyQqyqdsSiqLQISBL29aUW4U/M7pSPA/gEUZQqv1cwx4OnYxTxve5UMg5GT6L4JJg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="navbar">
+                <h1>Alış-veriş saytı</h1>
+                <div class="search-bar">
+                    <input type="text" id="searchInput" placeholder="Məhsul axtar...">
+                    <button onclick="searchProduct()">Axtar</button>
+                </div>
+                <button onclick="openCart()" class="cartIcon"><i class="fa-solid fa-cart-shopping"></i><span id="cartCount">0</span></button>
+            </div>
+        </div>
+        <div class="sebet">
+            <div class="sebet-heading">
+                <h4 style="text-align: start; font: 600 28px arial; padding: 10px;">Səbət:</h4>
+                <button onclick="closeCart()" class="closeCartBtn"><i class="fa-solid fa-x"></i></button>
+            </div>
+            <div class="sebet-content">
+
+            </div>
+            <div class="sebet-end">
+                <h4 style="text-align: start; font: 600 28px arial; padding: 10px;">Total: $<span class="sebet-total">0</span></h4>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div id="main-left">
+            <div class="main-left-content">
+                <button onclick="listBtn('butun')">Bütün məhsullar</button>
+                <button onclick="listBtn('tech')">Texnologiya</button>
+                <button onclick="listBtn('food')">Qida</button>
+                <button onclick="listBtn('furniture')">Mebel</button>
+                <button onclick="listBtn('clothing')">Geyim</button>
+            </div>
+        </div>
+        <div id="main-right">
+            <div id="cards"></div>
+        </div>
+    </main>
+</body>
+
+<script src="data.js"></script>
+<script>
+    const cards = document.querySelector('#cards')
+
+    // UPDATE LIST - START
+    let listArr = []
+
+    function listBtn(a){
+        listArr = []
+        for(let i=0;i<products.length;i++){
+            if(products[i].category==a){
+                listArr.push(products[i])
+            }
+            else if(a=='butun'){
+                listArr.push(products[i])
+            }
+        }
+        updateCards() 
+    }
+
+
+    function updateCards() {
+        let kod = ''
+        for (let i = 0; i < listArr.length; i++) {
+            kod += `<div class="card">
+                    <div class="card-img"><img src="${listArr[i].image}" alt=""></div>
+                    <h4>${listArr[i].name}</h4>
+                    <h6>Qiymət: $${listArr[i].price} </h6>
+                    <button onclick="sebeteAT(${listArr[i].id})">Səbətə əlavə et</button>
+                </div>`
+        }
+        cards.innerHTML = kod
+    }
+    listBtn('butun')
+    // UPDATE LIST - END
+
+    // CART OPEN CLOSE - START
+    const cart = document.querySelector('.sebet')
+    function openCart() {
+        cart.style.right = 0
+    }
+    function closeCart() {
+        cart.style.right = '-100%'
+    }
+    // CART OPEN CLOSE - END
+
+    // const sebetArr = []
+    // function sebeteAT(i) {
+    //     sebetArr.push(listArr[i-1])
+    //     console.log(sebetArr);
+    //     updateCart()
+    // }
+
+    const sebetArr = []
+    function sebeteAT(id) {
+        const product = listArr.find(item => item.id === id)
+        const existingProduct = sebetArr.find(item => item.id === product.id)
+
+        if (existingProduct) {
+            existingProduct.quantity++  // Eğer ürün zaten sepette varsa, miktarını artır
+        } else {
+            sebetArr.push({...product, quantity: 1})  // Yeni ürün, miktar 1 olarak eklenir
+        }
+        updateCart()
+    }
+
+
+    const cartContent = document.querySelector('.sebet-content')
+    const cartCount = document.querySelector('#cartCount')
+
+    function updateCart() {
+        let kod = ''
+        for (let i = 0; i < sebetArr.length; i++) {
+            kod += `<div class="sebet-card">
+                    <div class="sebet-card-left">
+                        <div class="sebet-card-img"><img src="${sebetArr[i].image}" alt=""></div>
+                        <p>${sebetArr[i].name} - $${sebetArr[i].price} x ${sebetArr[i].quantity}</p>
+                    </div>
+                    <div class="sebet-card-right">
+                        <button onclick="decrease(${sebetArr[i].id})">-</button>
+                        <button onclick="increase(${sebetArr[i].id})">+</button>
+                        <button onclick="removeCard(${sebetArr[i].id})">sil</button>    
+                    </div>
+                </div>`
+        }
+        cartContent.innerHTML = kod
+        cartCount.innerHTML = sebetArr.reduce((acc, item) => acc + item.quantity, 0)
+        cartSum()
+    }
+    function removeCard(id){
+        const productIndex = sebetArr.findIndex(item => item.id === id)
+        if (productIndex > -1) {
+            sebetArr.splice(productIndex, 1) // Belirtilen id'ye sahip ürünü sil
+            updateCart() // Sepeti güncelle
+        }
+        cartSum()
+    }
+
+    function increase(id) {
+        const product = sebetArr.find(item => item.id === id)
+        if (product) {
+            product.quantity++
+            updateCart()
+        }
+        cartSum()
+    }
+
+    function decrease(id) {
+        const product = sebetArr.find(item => item.id === id)
+        if (product) {
+            if (product.quantity > 1) {
+                product.quantity--
+            } else {
+                const productIndex = sebetArr.findIndex(item => item.id === id)
+                sebetArr.splice(productIndex, 1) // Miktar 1'se ve azaltılırsa, ürünü sil
+            }
+            updateCart()
+        }
+        cartSum()
+    }
+    // CART FUNCTIONALITY - END 
+
+    const sebetTotal = document.querySelector('.sebet-total')
+    let cartTotal = 0
+    function cartSum(){
+        cartTotal=0
+        for(let i=0;i<sebetArr.length;i++){
+            cartTotal += sebetArr[i].price * sebetArr[i].quantity
+        }
+        sebetTotal.innerHTML = cartTotal
+    }
+
+    function searchProduct() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase()
+        const filteredProducts = products.filter(product => 
+            product.name.toLowerCase().includes(searchTerm)
+        )
+        listArr = filteredProducts
+        updateCards()
+    }
+
+</script>
+
+</html>
